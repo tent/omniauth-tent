@@ -1,0 +1,17 @@
+process do |files|
+  test_files = files.take_and_map do |file|
+    if file =~ %r{^(spec|lib)/(.+?)(_spec)?\.rb$}
+      path = $2
+      if file =~ %r{^spec/spec_helper\.rb}
+        ""
+      else
+        "spec/#{path}_spec.rb"
+      end
+    end
+  end
+  rspec_command = "time bundle exec rspec --tty --color"
+  res = execute "#{rspec_command} #{test_files.join(' ')}" unless test_files.empty?
+  if res.exit_code == 0 && test_files != [""]
+    execute rspec_command
+  end
+end
