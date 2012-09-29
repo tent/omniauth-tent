@@ -11,14 +11,10 @@ module OmniAuth
       option :get_app_id, lambda { |entity| }
       option :on_app_created, lambda { |app| }
       option :on_discovery, lambda { |profile| }
-      option :app_name, ""
-      option :app_icon, ""
-      option :app_description, ""
-      option :scopes, {}
+      option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
       option :profile_info_types, []
       option :post_types, []
       option :notification_url, ""
-      option :redirect_uris, nil
 
       def request_params
         Hashie::Mash.new(request.params)
@@ -75,25 +71,25 @@ module OmniAuth
         app = client.app.get(app_id).body
         if app && !app.kind_of?(::String)
           @tent_app = Hashie::Mash.new(app)
+          set_state(:app_id, @tent_app.id)
         else
           create_app
         end
       end
 
       def create_app
-        client = ::TentClient.new
+        client = ::TentClient.new(@server_url)
         res = client.app.create(
-          :name => options[:name],
-          :description => options[:description],
-          :scopes => options[:scopes],
-          :icon => options[:icon],
-          :notification_url => options[:notification_url],
-          :redirect_uris => options[:redirect_uris] || [callback_url]
+          :name => options.app.name,
+          :description => options.app.description,
+          :scopes => options.app.scopes,
+          :icon => options.app.icon,
+          :redirect_uris => options.app.redirect_uris || [callback_url]
         )
 
-        if (app = res.body) && !app.body.kind_of?(::String)
-          options[:on_app_created].call(res.body)
-          @tent_app = Hashie::Mash.new(res.body)
+        if (app = res.body) && !app.kind_of?(::String)
+          @tent_app = Hashie::Mash.new(app)
+          options[:on_app_created].call(@tent_app)
           set_state(:app_id, @tent_app.id)
         else
           fail!(:app_create_failure)
@@ -123,18 +119,18 @@ module OmniAuth
       end
 
       def verify_state!
-        fail!(:state_missmatch) unless get_state(:state) == request.params[:state]
+        fail!(:state_missmatch) unless get_state(:state) == request.params['state']
       end
 
       def create_app_authorization!
         client = ::TentClient.new(get_state(:server_url))
-        res = client.app.authorization.create(get_state(:app_id), :code => request.params[:code])
+        res = client.app.authorization.create(get_state(:app_id), :code => request.params['code'])
         fail!(:app_creation_failure) if res.body.kind_of?(::String)
         @app_authorization = Hashie::Mash.new(res.body)
       end
 
       def build_auth_hash!
-        Hashie::Mash.new(
+        env['omniauth.auth_hash'] = Hashie::Mash.new(
           :provider => 'tent',
           :uid => get_state(:entity),
           :info => extract_basic_info(get_state(:profile)),
