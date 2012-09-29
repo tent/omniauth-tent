@@ -1,4 +1,4 @@
-# Omniauth::Tent
+# Omniauth::Tent (WIP)
 
 Omniauth strategy for Tent.
 
