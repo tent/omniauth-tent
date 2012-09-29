@@ -140,8 +140,8 @@ describe OmniAuth::Strategies::Tent do
       post '/auth/tent', { :entity => tent_entity }, env
 
       expect(last_response.status).to eq(302)
-      expect(last_response.headers["Location"]).
-        to match(%r{^#{tent_server}/oauth/authorize\?client_id=#{app_id}})
+      expect(last_response.headers["Location"]).to match(%r{^#{tent_server}/oauth/authorize})
+      expect(last_response.headers["Location"]).to match(%r{client_id=#{app_id}})
     end
   end
 
