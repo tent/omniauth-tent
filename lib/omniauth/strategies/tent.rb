@@ -10,7 +10,6 @@ module OmniAuth
 
       option :get_app_id, lambda { |entity| }
       option :on_app_created, lambda { |app| }
-      option :on_discovery, lambda { |profile| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
       option :profile_info_types, []
       option :post_types, []
@@ -56,7 +55,6 @@ module OmniAuth
       def perform_discovery!
         client = ::TentClient.new
         @profile, @server_url = client.discover(request[:entity]).get_profile
-        options[:on_discovery].call(@profile)
         set_state(:server_url, @server_url)
         set_state(:profile, @profile)
       end
