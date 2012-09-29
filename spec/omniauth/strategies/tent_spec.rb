@@ -156,6 +156,7 @@ describe OmniAuth::Strategies::Tent do
       session['omniauth.profile'] = Yajl::Parser.parse(tent_profile)
 
       stub_app_auth_create_success!
+      stub_app_lookup_success!
 
       get '/auth/tent/callback', { :code => token_code, :state => state }, 'rack.session' => session
 
@@ -165,7 +166,8 @@ describe OmniAuth::Strategies::Tent do
       expect(auth_hash.uid).to eq(tent_entity)
       expect(auth_hash.info).to eq(Hashie::Mash.new(
         :name => nil,
-        :nickname => tent_entity
+        :nickname => tent_entity,
+        :image => nil
       ))
       expect(auth_hash.credentials).to eq(Hashie::Mash.new(
         :token => access_token,

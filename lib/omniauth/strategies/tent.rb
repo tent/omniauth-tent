@@ -131,6 +131,16 @@ module OmniAuth
         @app_authorization = Hashie::Mash.new(res.body)
       end
 
+      def get_app
+        client = ::TentClient.new(get_state(:server_url), {
+          :mac_key_id => @app_authorization.access_token,
+          :mac_key => @app_authorization.mac_key,
+          :mac_algorithm => @app_authorization.mac_algorithm
+        })
+
+        client.app.get(get_state(:app_id)).body
+      end
+
       def build_auth_hash!
         env['omniauth.auth_hash'] = Hashie::Mash.new(
           :provider => 'tent',
@@ -143,7 +153,8 @@ module OmniAuth
           :extra => {
             :raw_info => {
               :profile => get_state(:profile),
-              :app_authorization => @app_authorization
+              :app_authorization => @app_authorization,
+              :app => get_app
             },
             :credentials => {
               :mac_key_id => @app_authorization.access_token,
@@ -163,7 +174,8 @@ module OmniAuth
 
         {
           :name => basic_info.name,
-          :nickname => get_state(:entity)
+          :nickname => get_state(:entity),
+          :image => basic_info.avatar
         }
       end
     end
