@@ -19,8 +19,9 @@ end
 
 Available options (see [the Tent.io docs for details](http://tent.io/docs/app-auth))
 
+
 | Option | Required | Description |
------------------------------------
+| ------ | -------- | ----------- |
 | get_app_id | Yes | Should be a lambda (or anything which responds to `call`) returning either an existing app_id or `nil`. The entity URI will be passed in as a single argument. |
 | on_app_created | Yes | Should respond to `call` and expect a single argument. It's called with app details when the app is first created (this happens when `get_app_id` returns `nil` or lookup fails for the given app_id) |
 | on_app_create_failure | Yes | Called when app creation fails with Faraday response |
