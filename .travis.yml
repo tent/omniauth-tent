@@ -1,4 +1,9 @@
 before_script: mkdir ./log && touch ./log/test.log
+language: ruby
 rvm:
   - 1.9.3
+  - 1.9.2
+  - rbx-18mode
+  - rbx-19mode
   - 1.8.7
+  - ree
