@@ -8,6 +8,9 @@ module OmniAuth
     class Tent
       include OmniAuth::Strategy
 
+      Error = Class.new(StandardError)
+      AppCreateFailure = Class.new(Error)
+
       option :get_app_id, lambda { |entity| }
       option :on_app_created, lambda { |app| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
@@ -82,6 +85,7 @@ module OmniAuth
           :description => options.app.description,
           :scopes => options.app.scopes,
           :icon => options.app.icon,
+          :url => options.app.url,
           :redirect_uris => options.app.redirect_uris || [callback_url]
         )
 
@@ -90,16 +94,16 @@ module OmniAuth
           options[:on_app_created].call(@tent_app)
           set_state(:app_id, @tent_app.id)
         else
-          fail!(:app_create_failure)
+          fail!(:app_create_failure, AppCreateFailure.new(res.body))
         end
       end
 
       def build_uri_and_redirect!
-        auth_uri = URI(@server_url + '/oauth')
+        auth_uri = URI(@server_url + '/oauth/authorize')
         params = {
           :client_id => @tent_app.id,
-          :tent_profile_info_types => options[:profile_info_types],
-          :tent_post_types => options[:post_types],
+          :tent_profile_info_types => options[:profile_info_types].join(','),
+          :tent_post_types => options[:post_types].join(','),
           :tent_notification_url => options[:notification_url],
           :redirect_uri => callback_url,
         }

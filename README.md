@@ -23,7 +23,7 @@ Available options (see [the Tent.io docs for details](http://tent.io/docs/app-au
 | ------ | -------- | ----------- |
 | get_app_id | Yes | Should be a lambda (or anything which responds to `call`) returning either an existing app_id or `nil`. The entity URI will be passed in as a single argument. |
 | on_app_created | Yes | Should respond to `call` and expect a single argument. It's called with app details when the app is first created (this happens when `get_app_id` returns `nil` or lookup fails for the given app_id) |
-| app | Yes | `name`, `icon`, `description`, `scopes`, and `redirect_uris` |
+| app | Yes | `name`, `icon`, `url`, `description`, `scopes`, and `redirect_uris` |
 | profile_info_types | Yes | Array of profile info type URIs your app wants access to |
 | post_types | Yes | Array of post type URIs your app wants access to |
 | notification_url | Yes | URL for receiving notifications |

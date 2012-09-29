@@ -38,6 +38,7 @@ describe OmniAuth::Strategies::Tent do
       :description => "An example app",
       :scopes => { "read_posts" => "Display your posts feed" },
       :icon => "https://example.com/icon.png",
+      :url => "https://example.com"
     }
   end
   let(:app_json) { %({"name":"Example App","id":"#{app_id}"}) }
@@ -140,7 +141,7 @@ describe OmniAuth::Strategies::Tent do
 
       expect(last_response.status).to eq(302)
       expect(last_response.headers["Location"]).
-        to match(%r{^#{tent_server}/oauth\?client_id=#{app_id}})
+        to match(%r{^#{tent_server}/oauth/authorize\?client_id=#{app_id}})
     end
   end
 
