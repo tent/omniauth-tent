@@ -1,4 +1,5 @@
 require 'omniauth'
+require 'tent-client'
 require 'uri'
 require 'securerandom'
 
@@ -7,21 +8,25 @@ module OmniAuth
     class Tent
       include OmniAuth::Strategy
 
-      option :get_app_id, lambda { fail!(:app_id_option_not_provided) }
-      option :on_app_created, lambda { |app| fail!(:on_app_created_option_not_provided) }
+      option :get_app_id, lambda { |entity| }
+      option :on_app_created, lambda { |app| }
       option :on_discovery, lambda { |profile| }
-      option :name, ""
-      option :icon, ""
-      option :description, ""
+      option :app_name, ""
+      option :app_icon, ""
+      option :app_description, ""
       option :scopes, {}
       option :profile_info_types, []
       option :post_types, []
       option :notification_url, ""
       option :redirect_uris, nil
 
+      def request_params
+        Hashie::Mash.new(request.params)
+      end
+
       def request_phase
-        if request.post? && request.params[:entity]
-          set_state(:entity, request.params[:entity])
+        if request.post? && request_params.entity
+          set_state(:entity, request_params.entity)
           perform_discovery!
           find_or_create_app!
           build_uri_and_redirect!
@@ -53,6 +58,7 @@ module OmniAuth
       end
 
       def perform_discovery!
+        client = ::TentClient.new
         @profile, @server_url = client.discover(request[:entity]).get_profile
         options[:on_discovery].call(@profile)
         set_state(:server_url, @server_url)
@@ -65,7 +71,7 @@ module OmniAuth
       end
 
       def lookup_app(app_id)
-        client = ::Tent::Client.new(@server_url)
+        client = ::TentClient.new(@server_url)
         app = client.app.get(app_id).body
         if app && !app.kind_of?(::String)
           @tent_app = Hashie::Mash.new(app)
@@ -75,7 +81,7 @@ module OmniAuth
       end
 
       def create_app
-        client = ::Tent::Client.new
+        client = ::TentClient.new
         res = client.app.create(
           :name => options[:name],
           :description => options[:description],
@@ -121,7 +127,7 @@ module OmniAuth
       end
 
       def create_app_authorization!
-        client = ::Tent::Client.new(get_state(:server_url))
+        client = ::TentClient.new(get_state(:server_url))
         res = client.app.authorization.create(get_state(:app_id), :code => request.params[:code])
         fail!(:app_creation_failure) if res.body.kind_of?(::String)
         @app_authorization = Hashie::Mash.new(res.body)
