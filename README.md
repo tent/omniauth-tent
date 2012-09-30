@@ -40,6 +40,11 @@ OR
 
 ## Contributing
 
+Here are some tasks that need to be done:
+
+- Handle being passed an 'error' param in the callback_phase
+- Find bugs and fix them
+
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
