@@ -69,7 +69,7 @@ describe OmniAuth::Strategies::Tent do
   end
 
   let(:stub_app_create_success!) do
-    stub_request(:post, "#{tent_server}/apps").with(:body => Yajl::Encoder.encode(app_attrs.merge(:redirect_uris => ["http://example.org/auth/tent/callback"]))).to_return(:body => app_json, :headers => { 'Content-Type' => TentClient::MEDIA_TYPE })
+    stub_request(:post, "#{tent_server}/apps").to_return(:body => app_json, :headers => { 'Content-Type' => TentClient::MEDIA_TYPE })
   end
 
   let(:stub_app_auth_create_success!) do
