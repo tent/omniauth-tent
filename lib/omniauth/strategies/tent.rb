@@ -11,7 +11,7 @@ module OmniAuth
       Error = Class.new(StandardError)
       AppCreateFailure = Class.new(Error)
 
-      option :get_app_id, lambda { |entity| }
+      option :get_app, lambda { |entity| }
       option :on_app_created, lambda { |app, entity| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
       option :profile_info_types, []
@@ -63,8 +63,8 @@ module OmniAuth
       end
 
       def find_or_create_app!
-        app_id = options[:get_app_id].call(get_state(:entity))
-        app_id ? lookup_app(app_id) : create_app
+        app = Hashie::Mash.new(options[:get_app].call(get_state(:entity)) || {})
+        app.id ? lookup_app(app.id) : create_app
       end
 
       def lookup_app(app_id)

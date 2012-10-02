@@ -42,6 +42,7 @@ describe OmniAuth::Strategies::Tent do
     }
   end
   let(:app_json) { %({"name":"Example App","id":"#{app_id}"}) }
+  let(:app_hash) { Yajl::Parser.parse(app_json) }
 
   let(:token_code) { 'token-code-123abc' }
 
@@ -95,7 +96,7 @@ describe OmniAuth::Strategies::Tent do
     end
 
     it 'should find existing app' do
-      set_app!(:get_app_id => lambda { |entity| app_id })
+      set_app!(:get_app => lambda { |entity| app_hash })
       stub_head_discovery!
       stub_profile_discovery!
       app_lookup_stub = stub_app_lookup_success!
@@ -132,7 +133,7 @@ describe OmniAuth::Strategies::Tent do
     end
 
     it 'should build uri and redirect' do
-      set_app!(:get_app_id => lambda { |entity| app_id })
+      set_app!(:get_app => lambda { |entity| app_hash })
       stub_head_discovery!
       stub_profile_discovery!
       stub_app_lookup_success!
