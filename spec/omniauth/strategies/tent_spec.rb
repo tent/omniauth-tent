@@ -95,18 +95,6 @@ describe OmniAuth::Strategies::Tent do
       expect(profile_stub).to have_been_requested
     end
 
-    it 'should find existing app' do
-      set_app!(:get_app => lambda { |entity| app_hash })
-      stub_head_discovery!
-      stub_profile_discovery!
-      app_lookup_stub = stub_app_lookup_success!
-      described_class.any_instance.stubs(:build_uri_and_redirect!).returns([200, {}, []])
-
-      post '/auth/tent', { :entity => tent_entity }, env
-
-      expect(app_lookup_stub).to have_been_requested
-    end
-
     it 'should create app if app_id callback returns nil' do
       set_app!(:app => app_attrs)
       stub_head_discovery!
@@ -153,7 +141,7 @@ describe OmniAuth::Strategies::Tent do
       session['omniauth.state'] = state
       session['omniauth.entity'] = tent_entity
       session['omniauth.server_url'] = tent_server
-      session['omniauth.app_id'] = app_id
+      session['omniauth.app'] = { :id => app_id }
       session['omniauth.profile'] = Yajl::Parser.parse(tent_profile)
 
       stub_app_auth_create_success!
