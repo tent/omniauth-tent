@@ -10,6 +10,7 @@ module OmniAuth
 
       Error = Class.new(StandardError)
       AppCreateFailure = Class.new(Error)
+      AppAuthorizationCreateFailure = Class.new(Error)
       StateMissmatchError = Class.new(Error)
 
       option :get_app, lambda { |entity| }
@@ -37,6 +38,8 @@ module OmniAuth
         end
       rescue AppCreateFailure => e
         fail!(:app_create_failure, e)
+      rescue AppAuthorizationCreateFailure => e
+        fail!(:app_authorization_create_failure, e)
       rescue StateMissmatchError => e
         fail!(:state_missmatch) 
       end
@@ -130,7 +133,7 @@ module OmniAuth
                                                           :mac_key => get_app[:mac_key],
                                                           :mac_algorithm => get_app[:mac_algorithm])
         res = client.app.authorization.create(get_app[:id], :code => request.params['code'])
-        raise AppCreateFailure.new(res.body) if res.body.kind_of?(String)
+        raise AppAuthorizationCreateFailure.new(res.body) if res.body.kind_of?(String)
         @app_authorization = Hashie::Mash.new(res.body)
       end
 
