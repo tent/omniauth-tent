@@ -74,7 +74,7 @@ module OmniAuth
       end
 
       def get_app
-        @tent_app ||= get_state(:app)
+        @tent_app ||= Hashie::Mash.new(get_state(:app) || {})
       end
 
       def create_app
@@ -127,7 +127,9 @@ module OmniAuth
       end
 
       def create_app_authorization!
-        client = ::TentClient.new(get_state(:server_url))
+        client = ::TentClient.new(get_state(:server_url), :mac_key_id => get_app[:mac_key_id],
+                                                          :mac_key => get_app[:mac_key],
+                                                          :mac_algorithm => get_app[:mac_algorithm])
         res = client.app.authorization.create(get_app[:id], :code => request.params['code'])
         fail!(:app_creation_failure) if res.body.kind_of?(::String)
         @app_authorization = Hashie::Mash.new(res.body)
