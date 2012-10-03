@@ -10,6 +10,7 @@ module OmniAuth
 
       Error = Class.new(StandardError)
       AppCreateFailure = Class.new(Error)
+      StateMissmatchError = Class.new(Error)
 
       option :get_app, lambda { |entity| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
@@ -34,6 +35,10 @@ module OmniAuth
             f.text_field 'Entity', 'entity'
           end.to_response
         end
+      rescue AppCreateFailure => e
+        fail!(:app_create_failure, e)
+      rescue StateMissmatchError => e
+        fail!(:state_missmatch) 
       end
 
       def callback_phase
@@ -90,7 +95,7 @@ module OmniAuth
         if (app = res.body) && !app.kind_of?(::String)
           set_app(app)
         else
-          fail!(:app_create_failure, AppCreateFailure.new(res.body))
+          raise AppCreateFailure.new(res.body)
         end
       end
 
@@ -117,7 +122,7 @@ module OmniAuth
       end
 
       def verify_state!
-        fail!(:state_missmatch) unless get_state(:state) == request.params['state']
+        raise StateMissmatchError unless get_state(:state) == request.params['state']
       end
 
       def create_app_authorization!
@@ -125,7 +130,7 @@ module OmniAuth
                                                           :mac_key => get_app[:mac_key],
                                                           :mac_algorithm => get_app[:mac_algorithm])
         res = client.app.authorization.create(get_app[:id], :code => request.params['code'])
-        fail!(:app_creation_failure) if res.body.kind_of?(::String)
+        raise AppCreateFailure.new(res.body) if res.body.kind_of?(String)
         @app_authorization = Hashie::Mash.new(res.body)
       end
 
