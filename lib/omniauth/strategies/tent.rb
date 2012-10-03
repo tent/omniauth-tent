@@ -44,6 +44,7 @@ module OmniAuth
         verify_state!
         create_app_authorization!
         build_auth_hash!
+        delete_state!
         call_app!
       rescue AppAuthorizationCreateFailure => e
         fail!(:app_auth_create_failure, e)
@@ -169,6 +170,12 @@ module OmniAuth
             }
           }
         )
+      end
+
+      def delete_state!
+        %w( entity app server_url profile state ).each do |key|
+          session.delete("omniauth.#{key}")
+        end
       end
 
       def extract_basic_info(profile)
