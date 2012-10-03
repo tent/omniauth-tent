@@ -77,7 +77,7 @@ module OmniAuth
         if app[:id]
           res = client.app.get(app[:id])
           return create_app if res.body.kind_of?(::String)
-          set_app(res.body)
+          set_app(app)
         else
           create_app
         end
