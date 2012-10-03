@@ -62,14 +62,11 @@ module OmniAuth
       end
 
       def find_or_create_app!
-        puts 'find_or_create_app!'
         app = Hashie::Mash.new(options[:get_app].call(get_state(:entity)) || {})
-        puts "find_or_create_app! - app[:id] => #{app[:id].inspect}"
         app[:id] ? set_app(app) : create_app
       end
 
       def set_app(app)
-        puts "set_app: #{app.inspect}"
         set_state(:app, app)
       end
 
@@ -87,15 +84,12 @@ module OmniAuth
           :url => options.app.url,
           :redirect_uris => options.app.redirect_uris || [callback_url]
         }
-        puts "create_app - app_attrs => #{app_attrs.inspect}"
 
         res = client.app.create(app_attrs)
 
-        puts "create_app - app => #{res.inspect}"
         if (app = res.body) && !app.kind_of?(::String)
           set_app(app)
         else
-          puts "create_app - fail!"
           fail!(:app_create_failure, AppCreateFailure.new(res.body))
         end
       end
