@@ -12,7 +12,6 @@ module OmniAuth
       AppCreateFailure = Class.new(Error)
 
       option :get_app, lambda { |entity| }
-      option :on_app_created, lambda { |app, entity| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
       option :profile_info_types, []
       option :post_types, []
@@ -89,9 +88,8 @@ module OmniAuth
         )
 
         if (app = res.body) && !app.kind_of?(::String)
-          @tent_app = Hashie::Mash.new(app)
-          options[:on_app_created].call(@tent_app, get_state(:entity))
-          set_state(:app, @tent_app.to_hash)
+          set_app(app)
+          set_state(:app, app)
         else
           fail!(:app_create_failure, AppCreateFailure.new(res.body))
         end
