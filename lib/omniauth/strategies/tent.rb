@@ -67,13 +67,11 @@ module OmniAuth
       end
 
       def set_app(app)
-        @tent_app = Hashie::Mash.new(app)
         set_state(:app, app)
       end
 
       def get_app
-        app = get_state(:app)
-        @tent_app = Hashie::Mash.new(app)
+        @tent_app ||= get_state(:app)
       end
 
       def create_app
@@ -98,7 +96,7 @@ module OmniAuth
       def build_uri_and_redirect!
         auth_uri = URI(@server_url + '/oauth/authorize')
         params = {
-          :client_id => @tent_app[:id],
+          :client_id => get_app[:id],
           :tent_profile_info_types => options[:profile_info_types].join(','),
           :tent_post_types => options[:post_types].join(','),
           :tent_notification_url => options[:notification_url],
