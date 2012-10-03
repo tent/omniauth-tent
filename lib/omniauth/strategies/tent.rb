@@ -38,10 +38,6 @@ module OmniAuth
         end
       rescue AppCreateFailure => e
         fail!(:app_create_failure, e)
-      rescue AppAuthorizationCreateFailure => e
-        fail!(:app_authorization_create_failure, e)
-      rescue StateMissmatchError => e
-        fail!(:state_missmatch) 
       end
 
       def callback_phase
@@ -49,6 +45,11 @@ module OmniAuth
         create_app_authorization!
         build_auth_hash!
         call_app!
+      rescue AppAuthorizationCreateFailure => e
+        create_app
+        build_uri_and_redirect!
+      rescue StateMissmatchError => e
+        fail!(:state_missmatch) 
       end
 
       private
