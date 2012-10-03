@@ -71,7 +71,16 @@ module OmniAuth
 
       def find_or_create_app!
         app = Hashie::Mash.new(options[:get_app].call(get_state(:entity)) || {})
-        app[:id] ? set_app(app) : create_app
+        client = ::TentClient.new(get_state(:server_url), :mac_key_id => app[:mac_key_id],
+                                                          :mac_key => app[:mac_key],
+                                                          :mac_algorithm => app[:mac_algorithm])
+        if app[:id]
+          res = client.app.get(app[:id])
+          return create_app if res.body.kind_of?(::String)
+          set_app(res.body)
+        else
+          create_app
+        end
       end
 
       def set_app(app)
