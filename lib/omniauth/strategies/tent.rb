@@ -87,7 +87,6 @@ module OmniAuth
 
         if (app = res.body) && !app.kind_of?(::String)
           set_app(app)
-          set_state(:app, app)
         else
           fail!(:app_create_failure, AppCreateFailure.new(res.body))
         end
