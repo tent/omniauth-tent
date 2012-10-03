@@ -46,10 +46,9 @@ module OmniAuth
         build_auth_hash!
         call_app!
       rescue AppAuthorizationCreateFailure => e
-        create_app
-        build_uri_and_redirect!
+        fail!(:app_auth_create_failure, e)
       rescue StateMissmatchError => e
-        fail!(:state_missmatch) 
+        fail!(:state_missmatch, e) 
       end
 
       private
