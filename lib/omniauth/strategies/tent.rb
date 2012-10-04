@@ -25,7 +25,7 @@ module OmniAuth
 
       def request_phase
         if request.post? && request_params.entity
-          set_state(:entity, request_params.entity)
+          set_state(:entity, ensure_entity_has_scheme(request_params.entity))
           perform_discovery!
           find_or_create_app!
           build_uri_and_redirect!
@@ -53,6 +53,14 @@ module OmniAuth
       end
 
       private
+
+      def ensure_entity_has_scheme(entity_uri)
+        if entity_uri =~ %r{^[a-z]{3,}?://}
+          entity_uri
+        else
+          "https://#{entity_uri}"
+        end
+      end
 
       def set_state(key, val)
         session["omniauth.#{key}"] = val
