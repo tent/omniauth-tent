@@ -10,6 +10,7 @@ module OmniAuth
 
       Error = Class.new(StandardError)
       AppCreateFailure = Class.new(Error)
+      AppLookupFailure = Class.new(Error)
       AppAuthorizationCreateFailure = Class.new(Error)
       StateMissmatchError = Class.new(Error)
 
@@ -39,6 +40,8 @@ module OmniAuth
         end
       rescue AppCreateFailure => e
         fail!(:app_create_failure, e)
+      rescue AppLookupFailure => e
+        fail!(:app_lookup_failure, e)
       rescue => e
         fail!(:unknown_error, e)
       end
@@ -90,7 +93,13 @@ module OmniAuth
                                                           :mac_algorithm => app[:mac_algorithm])
         if app[:id]
           res = client.app.get(app[:id])
-          return create_app if res.body.kind_of?(::String)
+          if res.body.kind_of?(::String)
+            if res.status == 403
+              create_app and return
+            else
+              raise AppLookupFailure.new(res.inspect)
+            end
+          end
           set_app(app)
         else
           create_app
