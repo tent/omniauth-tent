@@ -121,7 +121,7 @@ module OmniAuth
         if (app = res.body) && !app.kind_of?(::String)
           set_app(app)
         else
-          raise AppCreateFailure.new(res.body)
+          raise AppCreateFailure.new(res.inspect)
         end
       end
 
