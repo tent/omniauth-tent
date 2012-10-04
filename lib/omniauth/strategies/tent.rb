@@ -38,6 +38,8 @@ module OmniAuth
         end
       rescue AppCreateFailure => e
         fail!(:app_create_failure, e)
+      rescue => e
+        fail!(:unknown_error, e)
       end
 
       def callback_phase
@@ -50,6 +52,8 @@ module OmniAuth
         fail!(:app_auth_create_failure, e)
       rescue StateMissmatchError => e
         fail!(:state_missmatch, e) 
+      rescue => e
+        fail!(:unknown_error, e)
       end
 
       private
