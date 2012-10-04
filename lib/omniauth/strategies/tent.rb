@@ -25,6 +25,7 @@ module OmniAuth
 
       def request_phase
         if request.post? && request_params.entity
+          delete_state!
           set_state(:entity, ensure_entity_has_scheme(request_params.entity))
           perform_discovery!
           find_or_create_app!
