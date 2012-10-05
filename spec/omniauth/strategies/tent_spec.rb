@@ -108,7 +108,7 @@ describe OmniAuth::Strategies::Tent do
     end
 
     it 'should create app if not found' do
-      set_app!(:app => app_attrs)
+      set_app!(:app => app_attrs, :on_app_created => mock(:call))
       stub_head_discovery!
       stub_profile_discovery!
       stub_app_lookup_failure!

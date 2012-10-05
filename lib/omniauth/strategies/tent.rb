@@ -15,6 +15,7 @@ module OmniAuth
       StateMissmatchError = Class.new(Error)
 
       option :get_app, lambda { |entity| }
+      option :on_app_created, lambda { |app| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
       option :profile_info_types, []
       option :post_types, []
@@ -129,6 +130,7 @@ module OmniAuth
 
         if (app = res.body) && !app.kind_of?(::String)
           set_app(app)
+          options[:on_app_created].call(get_app)
         else
           raise AppCreateFailure.new(res.inspect)
         end
