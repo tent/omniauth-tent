@@ -173,7 +173,7 @@ module OmniAuth
       end
 
       def build_auth_hash!
-        env['omniauth.auth_hash'] = Hashie::Mash.new(
+        env['omniauth.auth'] = Hashie::Mash.new(
           :provider => 'tent',
           :uid => get_state(:entity),
           :info => extract_basic_info(get_state(:profile)),
