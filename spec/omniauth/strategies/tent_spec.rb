@@ -149,7 +149,7 @@ describe OmniAuth::Strategies::Tent do
 
       get '/auth/tent/callback', { :code => token_code, :state => state }, 'rack.session' => session
 
-      auth_hash = last_response['env']['omniauth.auth_hash']
+      auth_hash = last_response['env']['omniauth.auth']
       expect(auth_hash).to_not be_nil
       expect(auth_hash.provider).to eq('tent')
       expect(auth_hash.uid).to eq(tent_entity)
