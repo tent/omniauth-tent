@@ -24,6 +24,7 @@ Available options (see [the Tent.io docs for details](http://tent.io/docs/app-au
 | Option | Required | Description |
 | ------ | -------- | ----------- |
 | get_app | Yes | Should be a lambda (or anything which responds to `call`) returning either an existing app attributes hash or `nil`. The entity URI will be passed in as a single argument. |
+| on_app_created | No | Should respond to `call`. Gets called with Hashie::Mash representation of app when created |
 | app | Yes | `name`, `icon`, `url`, `description`, `scopes`, and `redirect_uris` |
 | profile_info_types | Yes | Array of profile info type URIs your app wants access to |
 | post_types | Yes | Array of post type URIs your app wants access to |
