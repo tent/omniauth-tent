@@ -15,7 +15,7 @@ module OmniAuth
       StateMissmatchError = Class.new(Error)
 
       option :get_app, lambda { |entity| }
-      option :on_app_created, lambda { |app| }
+      option :on_app_created, lambda { |app, entity| }
       option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
       option :profile_info_types, []
       option :post_types, []
