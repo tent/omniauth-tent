@@ -130,7 +130,7 @@ module OmniAuth
 
         if (app = res.body) && !app.kind_of?(::String)
           set_app(app)
-          options[:on_app_created].call(get_app)
+          options[:on_app_created].call(get_app, get_state(:entity))
         else
           raise AppCreateFailure.new(res.inspect)
         end
