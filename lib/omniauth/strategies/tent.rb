@@ -95,7 +95,7 @@ module OmniAuth
         if app[:id]
           res = client.app.get(app[:id])
           if res.body.kind_of?(::String)
-            if res.status == 403
+            if ((400...500).to_a - [404]).include?(res.status)
               create_app and return
             else
               raise AppLookupFailure.new(res.inspect)
