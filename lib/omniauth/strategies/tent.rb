@@ -100,8 +100,9 @@ module OmniAuth
             else
               raise AppLookupFailure.new(res.inspect)
             end
+          else
+            set_app(app)
           end
-          set_app(app)
         else
           create_app
         end
