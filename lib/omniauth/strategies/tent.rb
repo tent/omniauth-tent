@@ -82,7 +82,7 @@ module OmniAuth
 
       def perform_discovery!
         client = ::TentClient.new
-        @profile, @server_url = client.discover(request[:entity]).get_profile
+        @profile, @server_url = client.discover(get_state(:entity)).get_profile
         set_state(:server_url, @server_url)
         set_state(:profile, @profile)
       end
