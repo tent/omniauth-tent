@@ -94,8 +94,8 @@ module OmniAuth
                                                           :mac_algorithm => app[:mac_algorithm])
         if app[:id]
           res = client.app.get(app[:id])
-          if res.body.kind_of?(::String)
-            if ((400...500).to_a - [404]).include?(res.status)
+          if !res.success?
+            if (400...500).include?(res.status)
               create_app and return
             else
               raise AppLookupFailure.new(res.inspect)
