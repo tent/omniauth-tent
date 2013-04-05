@@ -145,7 +145,7 @@ module OmniAuth
           :tent_post_types => options[:post_types].join(','),
           :tent_notification_url => options[:notification_url],
           :scope => options[:app][:scopes].keys.join(','),
-          :redirect_uri => callback_url,
+          :redirect_uri => Array(options.app.redirect_uris).first || callback_url,
         }
         params[:state] = set_state(:state, SecureRandom.hex(32))
         build_uri_params!(auth_uri, params)
