@@ -105,7 +105,7 @@ describe OmniAuth::Strategies::Tent do
 
   def server_named_url(name, params = {})
     uri_template = meta_post[:content]['servers'].first['urls'][name.to_s]
-    uri_template.gsub(/{([^}]+)}/) { URI.encode_www_form_component(params[$1.to_sym]) || "#{$1}" }
+    uri_template.gsub(/\{([^\}]+)\}/) { URI.encode_www_form_component(params[$1.to_sym]) || "#{$1}" }
   end
 
   def stub_head_discovery!
