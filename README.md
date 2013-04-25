@@ -19,7 +19,7 @@ use OmniAuth::Builder do
 end
 ```
 
-Available options (see the Tent.io docs for details)
+Available options (see the Tent docs for details)
 
 | Option | Required | Description |
 | ------ | -------- | ----------- |
