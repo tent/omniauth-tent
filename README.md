@@ -19,7 +19,7 @@ use OmniAuth::Builder do
 end
 ```
 
-Available options (see [the Tent.io docs for details](http://tent.io/docs/app-auth))
+Available options (see [the Tent docs for details](http://tent.io/docs/app-auth))
 
 | Option | Required | Description |
 | ------ | -------- | ----------- |
