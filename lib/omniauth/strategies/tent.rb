@@ -12,21 +12,34 @@ module OmniAuth
       AppCreateFailure = Class.new(Error)
       AppLookupFailure = Class.new(Error)
       AppAuthorizationCreateFailure = Class.new(Error)
+      DiscoveryFailure = Class.new(Error)
       StateMissmatchError = Class.new(Error)
+      InvalidAppError = Class.new(Error)
 
       option :get_app, lambda { |entity| }
       option :on_app_created, lambda { |app, entity| }
-      option :app, { :name => nil, :icon => nil, :description => nil, :scopes => {}, :redirect_uris => nil }
-      option :profile_info_types, []
-      option :post_types, []
-      option :notification_url, ""
+
+      option :app, {
+        :name => nil,
+        :description => nil,
+        :url => nil,
+        :redirect_uri => nil,
+        :read_post_types => [],
+        :write_post_types => [],
+        :notification_post_types => [],
+        :notification_url => nil,
+        :scopes => [],
+        :icon => nil
+      }
 
       def request_params
         Hashie::Mash.new(request.params)
       end
 
       def request_phase
-        if request.post? && request_params.entity
+        if request.post?
+          raise DiscoveryFailure.new("No entity given!") unless request_params.entity
+
           delete_state!
           set_state(:entity, ensure_entity_has_scheme(request_params.entity))
           perform_discovery!
@@ -43,13 +56,17 @@ module OmniAuth
         fail!(:app_create_failure, e)
       rescue AppLookupFailure => e
         fail!(:app_lookup_failure, e)
+      rescue InvalidAppError => e
+        fail!(:invalid_app, e)
+      rescue DiscoveryFailure => e
+        fail!(:discovery_failure, e)
       rescue => e
         fail!(:unknown_error, e)
       end
 
       def callback_phase
         verify_state!
-        create_app_authorization!
+        token_exchange!
         build_auth_hash!
         delete_state!
         call_app!
@@ -81,31 +98,65 @@ module OmniAuth
       end
 
       def perform_discovery!
-        client = ::TentClient.new
-        @profile, @server_url = client.discover(get_state(:entity)).get_profile
-        set_state(:server_url, @server_url)
-        set_state(:profile, @profile)
+        client = ::TentClient.new(get_state(:entity))
+        unless @server_meta = client.server_meta
+          raise DiscoveryFailure.new("Failed to perform discovery on #{get_state(:entity).inspect}")
+        end
+      end
+
+      def validate_app!(app)
+        unless Hash === app
+          raise InvalidAppError.new("Expected app to be a hash, got instance of #{app.class.name}")
+        end
+
+        expected_attributes = [:id, :credentials]
+        if expected_attributes.any? { |key| !app.has_key?(key) }
+          raise InvalidAppError.new("Expected app to have #{expected_attributes.map(&:inspect).join(', ')}, got #{app.keys.map(&:inspect).join(', ')}")
+        end
       end
 
       def find_or_create_app!
-        app = Hashie::Mash.new(options[:get_app].call(get_state(:entity)) || {})
-        client = ::TentClient.new(get_state(:server_url), :mac_key_id => app[:mac_key_id],
-                                                          :mac_key => app[:mac_key],
-                                                          :mac_algorithm => app[:mac_algorithm])
-        if app[:id]
-          res = client.app.get(app[:id])
-          if !res.success?
+        app = options[:get_app].call(get_state(:entity))
+        app = Hashie::Mash.new(app) if Hash === app
+
+        if app
+          validate_app!(app)
+
+          ##
+          # Check if app exists, if not create a new one
+
+          app_credentials = {
+            :id => app[:credentials][:hawk_id],
+            :hawk_key => app[:credentials][:hawk_key],
+            :hawk_algorithm => app[:credentials][:hawk_algorithm]
+          }
+          client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => @server_meta)
+
+          res = client.post.get(get_state(:entity), app[:id])
+
+          if res.success?
+            set_app(app)
+            set_server(res.env[:tent_server])
+          else
             if (400...500).include?(res.status)
               create_app and return
             else
               raise AppLookupFailure.new(res.inspect)
             end
-          else
-            set_app(app)
           end
         else
           create_app
         end
+      end
+
+      def set_server(server)
+        server_meta = @server_meta.dup
+        server_meta['servers'] = [server]
+        set_state(:server_meta, server_meta)
+      end
+
+      def get_server
+        @tent_server ||= Hashie::Mash.new(get_state(:server_meta)['servers'].first)
       end
 
       def set_app(app)
@@ -117,44 +168,94 @@ module OmniAuth
       end
 
       def create_app
-        client = ::TentClient.new(@server_url)
+        client = ::TentClient.new(get_state(:entity), :server_meta => @server_meta)
+
         app_attrs = {
-          :name => options.app.name,
-          :description => options.app.description,
-          :scopes => options.app.scopes,
-          :icon => options.app.icon,
-          :url => options.app.url,
-          :redirect_uris => options.app.redirect_uris || [callback_url]
+          :type => "https://tent.io/types/app/v0#",
+          :content => {
+            :name => options[:app][:name],
+            :description => options[:app][:description],
+            :url => options[:app][:url],
+            :redirect_uri => options[:app][:redirect_uri],
+            :post_types => {
+              :read => options[:app][:read_post_types],
+              :write => options[:app][:write_post_types]
+            },
+            :notification_url => options[:app][:notification_url],
+            :notification_post_types => options[:app][:notification_post_types],
+            :scopes => options[:app][:scopes]
+          },
+          :permissions => {
+            :public => false
+          }
         }
 
-        res = client.app.create(app_attrs)
+        app_icon_attrs = if options[:app][:icon]
+          if Hash === options[:app][:icon]
+            options[:app][:icon]
+          elsif options[:app][:icon].respond_to?(:path)
+            # Assume IO
+            filename = options[:app][:icon].path.to_s.split('/').last || 'appicon.png'
+            {
+              :content_type => "image/#{filename.split('.').last || 'png'}",
+              :category => 'icon',
+              :name => filename,
+              :data => options[:app][:icon]
+            }
+          elsif String === options[:app][:icon]
+            {
+              :content_type => "image/png",
+              :category => 'icon',
+              :name => "appicon.png",
+              :data => options[:app][:icon]
+            }
+          end
+        end
+        attachments = [app_icon_attrs].compact
 
-        if (app = res.body) && !app.kind_of?(::String)
-          set_app(app)
-          options[:on_app_created].call(get_app, get_state(:entity))
+        res = client.post.create(app_attrs, {}, :attachments => attachments)
+
+        if res.success? && (Hash === res.body)
+          app = res.body
+          credentials_post_link = ::TentClient::LinkHeader.parse(res.env[:response_headers]['Link'].to_s).links.find { |l| l[:rel] == 'https://tent.io/rels/credentials' }
+
+          if credentials_post_link && (credentials_post_res = client.http.get(credentials_post_link.uri.to_s)) && credentials_post_res.success?
+            credentials_post = Hashie::Mash.new(credentials_post_res.body)
+            set_app(app.merge(:credentials => {
+              :hawk_id => credentials_post.id,
+              :hawk_key => credentials_post.content.hawk_key,
+              :hawk_algorithm => credentials_post.content.hawk_algorithm
+            }))
+            options[:on_app_created].call(get_app, get_state(:entity))
+          else
+            raise AppLookupFailure.new("Failed to fetch app credentials!")
+          end
+
+          set_server(res.env[:tent_server])
         else
           raise AppCreateFailure.new(res.inspect)
         end
       end
 
+      def generate_state
+        SecureRandom.hex(32)
+      end
+
       def build_uri_and_redirect!
-        auth_uri = URI(@server_url + '/oauth/authorize')
+        auth_uri = URI(get_server.urls.oauth_auth)
+
         params = {
           :client_id => get_app[:id],
-          :tent_profile_info_types => options[:profile_info_types].join(','),
-          :tent_post_types => options[:post_types].join(','),
-          :tent_notification_url => options[:notification_url],
-          :scope => options[:app][:scopes].keys.join(','),
-          :redirect_uri => Array(options.app.redirect_uris).first || callback_url,
         }
-        params[:state] = set_state(:state, SecureRandom.hex(32))
-        build_uri_params!(auth_uri, params)
+        params[:state] = set_state(:state, generate_state)
+
+        auth_uri.query = build_query_string(params)
 
         redirect auth_uri.to_s
       end
 
-      def build_uri_params!(uri, params)
-        uri.query = params.inject([]) do |memo, (key,val)|
+      def build_query_string(params)
+        params.inject([]) do |memo, (key,val)|
           memo << "#{key}=#{URI.encode_www_form_component(val)}"
           memo
         end.join('&')
@@ -164,35 +265,34 @@ module OmniAuth
         raise StateMissmatchError unless get_state(:state) == request.params['state']
       end
 
-      def create_app_authorization!
-        client = ::TentClient.new(get_state(:server_url), :mac_key_id => get_app[:mac_key_id],
-                                                          :mac_key => get_app[:mac_key],
-                                                          :mac_algorithm => get_app[:mac_algorithm])
-        res = client.app.authorization.create(get_app[:id], :code => request.params['code'])
-        raise AppAuthorizationCreateFailure.new(res.body) if res.body.kind_of?(String)
-        @app_authorization = Hashie::Mash.new(res.body)
+      def token_exchange!
+        app_credentials = get_app[:credentials]
+        client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => get_state(:server_meta))
+
+        res = client.oauth_token_exchange(:code => request.params['code'])
+
+        raise AppAuthorizationCreateFailure.new(res.body) unless res.success?
+        @auth_credentials = Hashie::Mash.new(res.body)
       end
 
       def build_auth_hash!
         env['omniauth.auth'] = Hashie::Mash.new(
           :provider => 'tent',
           :uid => get_state(:entity),
-          :info => extract_basic_info(get_state(:profile)),
           :credentials => {
-            :token => @app_authorization.access_token,
-            :secret => @app_authorization.mac_key
+            :token => @auth_credentials.access_token,
+            :secret => @auth_credentials.hawk_key
           },
           :extra => {
             :raw_info => {
-              :profile => get_state(:profile),
-              :app_authorization => @app_authorization,
+              :auth_credentials => @auth_credentials,
               :app => get_app
             },
             :credentials => {
-              :mac_key_id => @app_authorization.access_token,
-              :mac_key => @app_authorization.mac_key,
-              :mac_algorithm => @app_authorization.mac_algorithm,
-              :token_type => @app_authorization.token_type
+              :id => @auth_credentials.access_token,
+              :hawk_key => @auth_credentials.hawk_key,
+              :hawk_algorithm => @auth_credentials.hawk_algorithm,
+              :token_type => @auth_credentials.token_type
             }
           }
         )
@@ -202,19 +302,6 @@ module OmniAuth
         %w( entity app server_url profile state ).each do |key|
           session.delete("omniauth.#{key}")
         end
-      end
-
-      def extract_basic_info(profile)
-        basic_info = Hashie::Mash.new(profile.inject({}) { |memo, (k,v)|
-          memo = v if k =~ %r{^https://tent.io/types/info/basic}
-          memo
-        })
-
-        {
-          :name => basic_info.name,
-          :nickname => get_state(:entity),
-          :image => basic_info.avatar
-        }
       end
     end
   end
