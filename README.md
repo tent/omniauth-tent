@@ -1,4 +1,4 @@
-[![Build Status](https://secure.travis-ci.org/tent/omniauth-tent.png)](http://travis-ci.org/tent/omniauth-tent)
+[![Build Status](https://travis-ci.org/tent/omniauth-tent.png?branch=0.3)](https://travis-ci.org/tent/omniauth-tent)
 
 # Omniauth::Tent
 
