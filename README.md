@@ -32,10 +32,6 @@ Available options (see [the Tent.io docs for details](http://tent.io/docs/app-au
 
 ## Testing
 
-    bundle exec kicker
-
-OR
-
     bundle exec rspec
 
 ## Contributing
