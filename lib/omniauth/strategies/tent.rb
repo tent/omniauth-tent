@@ -89,6 +89,7 @@ module OmniAuth
       end
 
       def set_state(key, val)
+        (session["omniauth.tent-keys"] ||= []) << key unless session["omniauth.tent-keys"].to_a.include?(key)
         session["omniauth.#{key}"] = val
         val
       end
@@ -300,7 +301,7 @@ module OmniAuth
       end
 
       def delete_state!
-        %w( entity app server_url profile state ).each do |key|
+        session.delete('omniauth.tent-keys').to_a.each do |key|
           session.delete("omniauth.#{key}")
         end
       end
