@@ -100,7 +100,7 @@ module OmniAuth
 
       def perform_discovery!
         client = ::TentClient.new(get_state(:entity))
-        unless @server_meta = client.server_meta
+        unless @server_meta = client.server_meta_post
           raise DiscoveryFailure.new("Failed to perform discovery on #{get_state(:entity).inspect}")
         end
       end
@@ -152,12 +152,12 @@ module OmniAuth
 
       def set_server(server)
         server_meta = @server_meta.dup
-        server_meta['servers'] = [server]
+        server_meta['content']['servers'] = [server]
         set_state(:server_meta, server_meta)
       end
 
       def get_server
-        @tent_server ||= Hashie::Mash.new(get_state(:server_meta)['servers'].first)
+        @tent_server ||= Hashie::Mash.new(get_state(:server_meta)['content']['servers'].first)
       end
 
       def set_app(app)
@@ -269,7 +269,7 @@ module OmniAuth
       def token_exchange!
         app_credentials = get_app[:credentials].dup
         app_credentials.merge!(:id => app_credentials.delete(:hawk_id))
-        client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => get_state(:server_meta))
+        client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => Hashie::Mash.new(get_state(:server_meta)))
 
         res = client.oauth_token_exchange(:code => request.params['code'], :token_type => 'https://tent.io/oauth/hawk-token')
 

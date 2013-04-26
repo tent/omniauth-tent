@@ -283,7 +283,7 @@ describe OmniAuth::Strategies::Tent do
     before do
       session['omniauth.state'] = state
       session['omniauth.entity'] = entity_uri
-      session['omniauth.server_meta'] = meta_post[:content]
+      session['omniauth.server_meta'] = meta_post
       session['omniauth.app'] = app_post.merge(:credentials => app_credentials)
     end
 
