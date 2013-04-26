@@ -266,10 +266,11 @@ module OmniAuth
       end
 
       def token_exchange!
-        app_credentials = get_app[:credentials]
+        app_credentials = get_app[:credentials].dup
+        app_credentials.merge!(:id => app_credentials.delete(:hawk_id))
         client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => get_state(:server_meta))
 
-        res = client.oauth_token_exchange(:code => request.params['code'])
+        res = client.oauth_token_exchange(:code => request.params['code'], :token_type => 'https://tent.io/oauth/hawk-token')
 
         raise AppAuthorizationCreateFailure.new(res.body) unless res.success?
         @auth_credentials = Hashie::Mash.new(res.body)
