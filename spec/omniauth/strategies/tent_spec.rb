@@ -23,10 +23,10 @@ describe OmniAuth::Strategies::Tent do
   }
   let(:meta_post) {
     {
-      :entity => entity_uri,
-      :type => 'https://tent.io/types/meta/v0#',
-      :published_at => (Time.now.to_f * 1000).to_i,
-      :content => {
+      'entity' => entity_uri,
+      'type' => 'https://tent.io/types/meta/v0#',
+      'published_at' => (Time.now.to_f * 1000).to_i,
+      'content' => {
         "entity" => entity_uri,
         "previous_entities" => [],
         "servers" => [
@@ -104,7 +104,7 @@ describe OmniAuth::Strategies::Tent do
   }
 
   def server_named_url(name, params = {})
-    uri_template = meta_post[:content]['servers'].first['urls'][name.to_s]
+    uri_template = meta_post['content']['servers'].first['urls'][name.to_s]
     uri_template.gsub(/\{([^\}]+)\}/) { URI.encode_www_form_component(params[$1.to_sym]) || "#{$1}" }
   end
 
@@ -283,11 +283,15 @@ describe OmniAuth::Strategies::Tent do
     before do
       session['omniauth.state'] = state
       session['omniauth.entity'] = entity_uri
-      session['omniauth.server_meta'] = meta_post
-      session['omniauth.app'] = app_post.merge(:credentials => app_credentials)
+      session['omniauth.server'] = meta_post['content']['servers'].first
     end
 
     it 'creates app authorization' do
+      app = app_post.merge(:credentials => app_credentials)
+      set_app(:get_app => proc { |e| app })
+
+      stub_head_discovery!
+      stub_meta_discovery!
       create_auth_stub = stub_app_auth_create!
 
       get '/auth/tent/callback', { :code => token_code, :state => state }, 'rack.session' => session
@@ -327,7 +331,8 @@ describe OmniAuth::Strategies::Tent do
     end
 
     it "maintains state through full oauth flow" do
-      set_app(:app => app_attrs)
+      app = nil
+      set_app(:app => app_attrs, :on_app_created => proc { |a| app = a }, :get_app => proc { |e| app })
 
       ##
       # Request Phase

@@ -151,21 +151,21 @@ module OmniAuth
       end
 
       def set_server(server)
-        server_meta = @server_meta.dup
-        server_meta['content']['servers'] = [server]
-        set_state(:server_meta, server_meta)
+        server['urls'].keep_if { |k,v| k =~ /\Aoauth/ }
+        set_state(:server, server)
+        @server = server
       end
 
       def get_server
-        @tent_server ||= Hashie::Mash.new(get_state(:server_meta)['content']['servers'].first)
+        @server ||= get_state(:server)
       end
 
       def set_app(app)
-        set_state(:app, app)
+        @tent_app = Hashie::Mash.new(app)
       end
 
       def get_app
-        @tent_app ||= Hashie::Mash.new(get_state(:app) || {})
+        @tent_app || set_app(options[:get_app].call(get_state(:entity)))
       end
 
       def create_app
@@ -243,7 +243,7 @@ module OmniAuth
       end
 
       def build_uri_and_redirect!
-        auth_uri = URI(get_server.urls.oauth_auth)
+        auth_uri = URI(get_server['urls']['oauth_auth'])
 
         params = {
           :client_id => get_app[:id],
@@ -263,13 +263,14 @@ module OmniAuth
       end
 
       def verify_state!
-        raise StateMissmatchError unless get_state(:state) == request.params['state']
+        raise StateMissmatchError.new("Expected #{get_state(:state).inspect}, got #{request.params['state'].inspect}") unless get_state(:state) == request.params['state']
       end
 
       def token_exchange!
         app_credentials = get_app[:credentials].dup
         app_credentials.merge!(:id => app_credentials.delete(:hawk_id))
-        client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => Hashie::Mash.new(get_state(:server_meta)))
+        client = ::TentClient.new(get_state(:entity), :credentials => app_credentials)
+        client.server_meta['servers'] = [get_server]
 
         res = client.oauth_token_exchange(:code => request.params['code'], :token_type => 'https://tent.io/oauth/hawk-token')
 
