@@ -161,7 +161,7 @@ module OmniAuth
       end
 
       def set_server(server)
-        server['urls'].keep_if { |k,v| k =~ /\Aoauth/ }
+        server['urls'].delete_if { |k,v| k !~ /\Aoauth/ }
         set_state(:server, server)
         @server = server
       end

@@ -332,7 +332,7 @@ describe OmniAuth::Strategies::Tent do
 
     it "maintains state through full oauth flow" do
       app = nil
-      set_app(:app => app_attrs, :on_app_created => proc { |a| app = a }, :get_app => proc { |e| app })
+      set_app(:app => app_attrs, :on_app_created => proc { |a, e| app = a }, :get_app => proc { |e| app })
 
       ##
       # Request Phase
