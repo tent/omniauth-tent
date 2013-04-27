@@ -54,14 +54,19 @@ module OmniAuth
           end.to_response
         end
       rescue AppCreateFailure => e
+        delete_state!
         fail!(:app_create_failure, e)
       rescue AppLookupFailure => e
+        delete_state!
         fail!(:app_lookup_failure, e)
       rescue InvalidAppError => e
+        delete_state!
         fail!(:invalid_app, e)
       rescue DiscoveryFailure => e
+        delete_state!
         fail!(:discovery_failure, e)
       rescue => e
+        delete_state!
         fail!(:unknown_error, e)
       end
 
@@ -73,10 +78,13 @@ module OmniAuth
         delete_state!
         call_app!
       rescue AppAuthorizationCreateFailure => e
+        delete_state!
         fail!(:app_auth_create_failure, e)
       rescue StateMissmatchError => e
+        delete_state!
         fail!(:state_missmatch, e) 
       rescue => e
+        delete_state!
         fail!(:unknown_error, e)
       end
 
