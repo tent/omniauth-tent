@@ -15,6 +15,7 @@ module OmniAuth
       DiscoveryFailure = Class.new(Error)
       StateMissmatchError = Class.new(Error)
       InvalidAppError = Class.new(Error)
+      OAuthError = Class.new(Error)
 
       option :get_app, lambda { |entity| }
       option :on_app_created, lambda { |app, entity| }
@@ -65,6 +66,7 @@ module OmniAuth
       end
 
       def callback_phase
+        check_error!
         verify_state!
         token_exchange!
         build_auth_hash!
@@ -260,6 +262,12 @@ module OmniAuth
           memo << "#{key}=#{URI.encode_www_form_component(val)}"
           memo
         end.join('&')
+      end
+
+      def check_error!
+        if request_params['error']
+          raise OAuthError.new(request_params['error'])
+        end
       end
 
       def verify_state!
