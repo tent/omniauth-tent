@@ -257,7 +257,7 @@ describe OmniAuth::Strategies::Tent do
 
       context 'when fetch fails' do
         before do
-          set_app(:get_app => lambda { |entity| app_post.merge(:credentials => app_credentials) })
+          set_app(:app => app_attrs, :get_app => lambda { |entity| app_post.merge(:credentials => app_credentials) })
           stub_fetch_app_failure!
         end
 
@@ -267,7 +267,7 @@ describe OmniAuth::Strategies::Tent do
 
     context 'when app found' do
       before do
-        set_app(:get_app => lambda { |entity| app_post.merge(:credentials => app_credentials) })
+        set_app(:app => app_attrs, :get_app => lambda { |entity| app_post.merge(:credentials => app_credentials) })
       end
 
       context &builds_uri_and_redirects
@@ -288,7 +288,7 @@ describe OmniAuth::Strategies::Tent do
 
     it 'creates app authorization' do
       app = app_post.merge(:credentials => app_credentials)
-      set_app(:get_app => proc { |e| app })
+      set_app(:app => app_attrs, :get_app => proc { |e| app })
 
       stub_head_discovery!
       stub_meta_discovery!

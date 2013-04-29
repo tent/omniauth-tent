@@ -10,6 +10,7 @@ module OmniAuth
 
       Error = Class.new(StandardError)
       AppCreateFailure = Class.new(Error)
+      AppUpdateFailure = Class.new(Error)
       AppLookupFailure = Class.new(Error)
       AppAuthorizationCreateFailure = Class.new(Error)
       DiscoveryFailure = Class.new(Error)
@@ -146,8 +147,15 @@ module OmniAuth
           res = client.post.get(get_state(:entity), app[:id])
 
           if res.success?
-            set_app(app)
-            set_server(res.env[:tent_server])
+            if res.body['content']['scopes'].to_a.sort == options[:app][:scopes].to_a.sort &&
+               res.body['content']['post_types']['read'].to_a.sort == options[:app][:read_post_types].to_a.sort &&
+               res.body['content']['post_types']['write'].to_a.sort == options[:app][:write_post_types].to_a.sort
+
+              set_app(app)
+              set_server(res.env[:tent_server])
+            else
+              update_app(res.body, app_credentials)
+            end
           else
             if (400...500).include?(res.status)
               create_app and return
@@ -178,9 +186,7 @@ module OmniAuth
         @tent_app || set_app(options[:get_app].call(get_state(:entity)))
       end
 
-      def create_app
-        client = ::TentClient.new(get_state(:entity), :server_meta => @server_meta)
-
+      def build_app
         app_attrs = {
           :type => "https://tent.io/types/app/v0#",
           :content => {
@@ -224,6 +230,31 @@ module OmniAuth
         end
         attachments = [app_icon_attrs].compact
 
+        [app_attrs, attachments]
+      end
+
+      def update_app(app, app_credentials)
+        client = ::TentClient.new(get_state(:entity), :credentials => app_credentials, :server_meta => @server_meta)
+
+        app_attrs, attachments = build_app
+        app_attrs[:version] = { :parents => [{ :version => app['version']['id'] }] }
+
+        res = client.post.update(app['entity'], app['id'], app_attrs)
+
+        if res.success? && (Hash === res.body)
+          p [app[:credentials], app['credentials']]
+          set_app(res.body.merge(:credentials => app[:credentials] || app['credentials']))
+          options[:on_app_created].call(get_app, get_state(:entity))
+          set_server(res.env[:tent_server])
+        else
+          raise AppUpdateFailure.new(res.inspect)
+        end
+      end
+
+      def create_app
+        client = ::TentClient.new(get_state(:entity), :server_meta => @server_meta)
+
+        app_attrs, attachments = build_app
         res = client.post.create(app_attrs, {}, :attachments => attachments)
 
         if res.success? && (Hash === res.body)
