@@ -17,34 +17,37 @@ describe OmniAuth::Strategies::Tent do
 
   let(:entity_uri) { "http://entity.example.org/xfapc" }
   let(:server_url) { "http://tent.example.org/xfapc" }
-  let(:server_meta_post_url) { "#{server_url}/posts/meta-post" }
+  let(:server_meta_post_url) { "#{server_url}/posts/#{URI.encode_www_form_component(entity_uri)}/meta-post-id" }
   let(:link_header) {
     %(<#{server_meta_post_url}>; rel="https://tent.io/rels/meta-post")
   }
   let(:meta_post) {
     {
-      'entity' => entity_uri,
-      'type' => 'https://tent.io/types/meta/v0#',
-      'published_at' => (Time.now.to_f * 1000).to_i,
-      'content' => {
+      "id" => "DBhFT_BvKe4zKAPvZJaHMg",
+      "type" => "https://tent.io/types/meta/v0#",
+      "entity" => entity_uri,
+      "published_at" => 1371489957115,
+      "content" => {
         "entity" => entity_uri,
-        "previous_entities" => [],
-        "servers" => [
-          {
-            "version" => "0.3",
-            "urls" => {
-              "oauth_auth" => "#{server_url}/oauth/authorize",
-              "oauth_token" => "#{server_url}/oauth/token",
-              "posts_feed" => "#{server_url}/posts",
-              "new_post" => "#{server_url}/posts",
-              "post" => "#{server_url}/posts/{entity}/{post}",
-              "post_attachment" => "#{server_url}/posts/{entity}/{post}/attachments/{name}?version={version}",
-              "batch" => "#{server_url}/batch",
-              "server_info" => "#{server_url}/server"
-            },
-            "preference" => 0
-          }
-        ]
+        "servers" => [{
+          "version" => "0.3",
+          "urls" => {
+            "oauth_auth" => "#{server_url}/oauth/authorize",
+            "oauth_token" => "#{server_url}/oauth/token",
+            "posts_feed" => "#{server_url}/posts",
+            "new_post" => "#{server_url}/posts",
+            "post" => "#{server_url}/posts/{entity}/{post}",
+            "post_attachment" => "#{server_url}/posts/{entity}/{post}/attachments/{name}",
+            "attachment" => "#{server_url}/attachments/{entity}/{digest}",
+            "batch" => "#{server_url}/batch",
+            "server_info" => "#{server_url}/server"
+          },
+          "preference" => 0
+        }]
+      },
+      "version" => {
+        "id" => "4fda2190756c2805ebd1094cc4a089982bac615279d8288cd4a4a9fdc4337761",
+        "published_at" => 1371489957115
       }
     }
   }
@@ -118,7 +121,7 @@ describe OmniAuth::Strategies::Tent do
       :headers => {
         'Content-Type' => 'application/json'
       },
-      :body => Yajl::Encoder.encode(meta_post)
+      :body => Yajl::Encoder.encode(:post => meta_post)
     )
   end
 
@@ -129,7 +132,7 @@ describe OmniAuth::Strategies::Tent do
         'Content-Type' => 'application/json',
         'Link' => %(<#{server_app_credentials_post_url}>; rel="https://tent.io/rels/credentials")
       },
-      :body => Yajl::Encoder.encode(app_post)
+      :body => Yajl::Encoder.encode(:post => app_post)
     )
   end
 
@@ -139,7 +142,7 @@ describe OmniAuth::Strategies::Tent do
       :headers => {
         'Content-Type' => 'application/json',
       },
-      :body => Yajl::Encoder.encode(app_post)
+      :body => Yajl::Encoder.encode(:post => app_post)
     )
   end
 
@@ -159,7 +162,7 @@ describe OmniAuth::Strategies::Tent do
       :headers => {
         'Content-Type' => 'application/json',
       },
-      :body => Yajl::Encoder.encode(app_credentials_post)
+      :body => Yajl::Encoder.encode(:post => app_credentials_post)
     )
   end
 

@@ -147,9 +147,9 @@ module OmniAuth
           res = client.post.get(get_state(:entity), app[:id])
 
           if res.success?
-            if res.body['content']['scopes'].to_a.sort == options[:app][:scopes].to_a.sort &&
-               res.body['content']['post_types']['read'].to_a.sort == options[:app][:read_post_types].to_a.sort &&
-               res.body['content']['post_types']['write'].to_a.sort == options[:app][:write_post_types].to_a.sort
+            if res.body['post']['content']['scopes'].to_a.sort == options[:app][:scopes].to_a.sort &&
+               res.body['post']['content']['post_types']['read'].to_a.sort == options[:app][:read_post_types].to_a.sort &&
+               res.body['post']['content']['post_types']['write'].to_a.sort == options[:app][:write_post_types].to_a.sort
 
               set_app(app)
               set_server(res.env[:tent_server])
@@ -241,9 +241,9 @@ module OmniAuth
 
         res = client.post.update(app['entity'], app['id'], app_attrs)
 
-        if res.success? && (Hash === res.body)
+        if res.success? && (Hash === res.body) && (Hash === res.body['post'])
           p [app[:credentials], app['credentials']]
-          set_app(res.body.merge(:credentials => app[:credentials] || app['credentials']))
+          set_app(res.body['post'].merge(:credentials => app[:credentials] || app['credentials']))
           options[:on_app_created].call(get_app, get_state(:entity))
           set_server(res.env[:tent_server])
         else
@@ -257,12 +257,12 @@ module OmniAuth
         app_attrs, attachments = build_app
         res = client.post.create(app_attrs, {}, :attachments => attachments)
 
-        if res.success? && (Hash === res.body)
-          app = res.body
+        if res.success? && (Hash === res.body) && (Hash === res.body['post'])
+          app = res.body['post']
           credentials_post_link = ::TentClient::LinkHeader.parse(res.env[:response_headers]['Link'].to_s).links.find { |l| l[:rel] == 'https://tent.io/rels/credentials' }
 
           if credentials_post_link && (credentials_post_res = client.http.get(credentials_post_link.uri.to_s)) && credentials_post_res.success?
-            credentials_post = Hashie::Mash.new(credentials_post_res.body)
+            credentials_post = Hashie::Mash.new(credentials_post_res.body).post
             set_app(app.merge(:credentials => {
               :hawk_id => credentials_post.id,
               :hawk_key => credentials_post.content.hawk_key,
