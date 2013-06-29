@@ -25,7 +25,7 @@ Available options (see the Tent docs for details)
 | ------ | -------- | ----------- |
 | get_app | Yes | Should be a lambda (or anything which responds to `call`) returning either an existing app attributes hash or `nil`. The entity URI will be passed in as a single argument. |
 | on_app_created | No | Should respond to `call`. Gets called with Hashie::Mash representation of app when created |
-| app | Yes | `name`, `description`, `url`, `redirect_uri`, `read_post_types`, `write_post_types`, `notification_post_types`, `notification_url`, `scopes` |
+| app | Yes | `name`, `description`, `url`, `redirect_uri`, `read_types`, `write_types`, `notification_types`, `notification_url`, `scopes` |
 
 ## Testing
 

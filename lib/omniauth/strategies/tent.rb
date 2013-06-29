@@ -26,9 +26,9 @@ module OmniAuth
         :description => nil,
         :url => nil,
         :redirect_uri => nil,
-        :read_post_types => [],
-        :write_post_types => [],
-        :notification_post_types => [],
+        :read_types => [],
+        :write_types => [],
+        :notification_types => [],
         :notification_url => nil,
         :scopes => [],
         :icon => nil
@@ -148,8 +148,8 @@ module OmniAuth
 
           if res.success?
             if res.body['post']['content']['scopes'].to_a.sort == options[:app][:scopes].to_a.sort &&
-               res.body['post']['content']['post_types']['read'].to_a.sort == options[:app][:read_post_types].to_a.sort &&
-               res.body['post']['content']['post_types']['write'].to_a.sort == options[:app][:write_post_types].to_a.sort
+               res.body['post']['content']['types']['read'].to_a.sort == options[:app][:read_types].to_a.sort &&
+               res.body['post']['content']['types']['write'].to_a.sort == options[:app][:write_types].to_a.sort
 
               set_app(app)
               set_server(res.env[:tent_server])
@@ -194,12 +194,12 @@ module OmniAuth
             :description => options[:app][:description],
             :url => options[:app][:url],
             :redirect_uri => options[:app][:redirect_uri],
-            :post_types => {
-              :read => options[:app][:read_post_types],
-              :write => options[:app][:write_post_types]
+            :types => {
+              :read => options[:app][:read_types],
+              :write => options[:app][:write_types]
             },
             :notification_url => options[:app][:notification_url],
-            :notification_post_types => options[:app][:notification_post_types],
+            :notification_types => options[:app][:notification_types],
             :scopes => options[:app][:scopes]
           },
           :permissions => {

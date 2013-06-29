@@ -63,11 +63,11 @@ describe OmniAuth::Strategies::Tent do
         :description => "Example App Description",
         :url => "http://someapp.example.com",
         :redirect_uri => "http://someapp.example.com/oauth/callback",
-        :post_types => {
+        :types => {
           :read => %w( all ),
           :write => %w( https://tent.io/types/status/v0# )
         },
-        :notification_post_types => %w( all ),
+        :notification_types => %w( all ),
         :scopes => %w( import_posts )
       },
       :permissions => {
@@ -184,9 +184,9 @@ describe OmniAuth::Strategies::Tent do
       :description => app_post[:content][:description],
       :url => app_post[:content][:url],
       :redirect_uri => app_post[:content][:redirect_uri],
-      :read_post_types => app_post[:content][:post_types][:read],
-      :write_post_types => app_post[:content][:post_types][:write],
-      :notification_post_types => app_post[:content][:notification_post_types],
+      :read_types => app_post[:content][:types][:read],
+      :write_types => app_post[:content][:types][:write],
+      :notification_types => app_post[:content][:notification_types],
       :notification_url => app_post[:content][:notification_url],
       :scopes => app_post[:content][:scopes],
     }
