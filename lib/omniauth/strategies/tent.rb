@@ -154,7 +154,7 @@ module OmniAuth
               set_app(app)
               set_server(res.env[:tent_server])
             else
-              update_app(res.body, app_credentials)
+              update_app(res.body['post'], app_credentials)
             end
           else
             if (400...500).include?(res.status)
