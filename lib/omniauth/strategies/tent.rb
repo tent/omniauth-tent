@@ -238,6 +238,8 @@ module OmniAuth
 
         app_attrs, attachments = build_app
         app_attrs[:version] = { :parents => [{ :version => app['version']['id'] }] }
+        app_attrs[:mentions] = app['mentions']
+        app_attrs[:refs] = app['refs']
 
         res = client.post.update(app['entity'], app['id'], app_attrs)
 
