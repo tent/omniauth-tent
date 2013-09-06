@@ -242,8 +242,7 @@ module OmniAuth
         res = client.post.update(app['entity'], app['id'], app_attrs)
 
         if res.success? && (Hash === res.body) && (Hash === res.body['post'])
-          p [app[:credentials], app['credentials']]
-          set_app(res.body['post'].merge(:credentials => app[:credentials] || app['credentials']))
+          set_app(res.body['post'].merge(:credentials => app_credentials.merge(:hawk_id => app_credentials.delete(:id))))
           options[:on_app_created].call(get_app, get_state(:entity))
           set_server(res.env[:tent_server])
         else
